@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,11 @@ namespace Lunar_Lander
 
         }
         public abstract void RegisterCommands();
+
+        public virtual void ReregisterCommands(Keys thrustKey, Keys leftKey, Keys rightKey)
+        {
+
+        }
         public abstract void LoadContent(ContentManager contentManager);
         public abstract void ProcessInput(GameTime gameTime);
         public abstract GameStateEnum Update(GameTime gameTime);

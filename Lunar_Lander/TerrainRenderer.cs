@@ -56,7 +56,6 @@ namespace Lunar_Lander
                 m_triangleVertices[baseIndex + 2].Position = new Vector3(line.p2.X, line.p2.Y, 0);
                 m_triangleVertices[baseIndex + 2].Color = color;
                 //Second triangle for the line
-                //PROBLEM: THESE NOT RENDERING
                 m_triangleVertices[baseIndex + 3].Position = new Vector3(line.p1.X, terrain.yBottom, 0);
                 m_triangleVertices[baseIndex + 3].Color = color;
                 m_triangleVertices[baseIndex + 4].Position = new Vector3(line.p2.X, line.p2.Y, 0);

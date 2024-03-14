@@ -19,17 +19,23 @@ namespace Lunar_Lander
     {
         private GraphicsDeviceManager _graphics;
         private Dictionary<GameStateEnum, IGameState> stateDict;
-        private GameStateEnum currentState;
+        private GameStateEnum currentState, nextState;
+        public Keys thrustKey, leftKey, rightKey;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
+            thrustKey = Keys.Up;
+            leftKey = Keys.Left;
+            rightKey = Keys.Right;
+
             stateDict = new Dictionary<GameStateEnum, IGameState>() 
             {
-                {GameStateEnum.Level1, new Level1View(GameStateEnum.Level1) },
-
+                { GameStateEnum.Level1, new Level1View(GameStateEnum.Level1, thrustKey, leftKey, rightKey) },
+                { GameStateEnum.Menu, new MenuView(GameStateEnum.Menu) },
+                { GameStateEnum.Controls, new ControlsView(GameStateEnum.Controls, thrustKey, leftKey, rightKey) },
             };
 
         }
@@ -39,7 +45,8 @@ namespace Lunar_Lander
             _graphics.PreferredBackBufferWidth = 800;
             _graphics.PreferredBackBufferHeight = 1080;
             // Initialize all states and set initial state
-            currentState = GameStateEnum.Level1; // TODO: Switch this to menu
+            currentState = GameStateEnum.Menu;
+            nextState = currentState;
             foreach (IGameState state in stateDict.Values)
             {
                 state.Initialize(GraphicsDevice, _graphics);
@@ -61,11 +68,28 @@ namespace Lunar_Lander
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
 
             // Run update for current game state, get next game state
-            currentState = stateDict[currentState].Update(gameTime);
+            nextState = stateDict[currentState].Update(gameTime);
+            // If controls have been changed, do the remap
+            if (currentState == GameStateEnum.Controls && ((ControlsView)stateDict[currentState]).remap)
+            {
+                foreach (IGameState state in stateDict.Values)
+                {
+                    thrustKey = ((ControlsView)stateDict[currentState]).getThrustKey();
+                    leftKey = ((ControlsView)stateDict[currentState]).getLeftKey();
+                    rightKey = ((ControlsView)stateDict[currentState]).getRightKey();
+                    state.ReregisterCommands(thrustKey, leftKey, rightKey);
+                }
+                ((ControlsView)stateDict[currentState]).remap = false;
+            }
+            // Conduct state change
+            if (currentState != nextState)
+            {
+                stateDict[nextState].Initialize(GraphicsDevice, _graphics);
+                stateDict[nextState].LoadContent(Content);
+                currentState = nextState;
+            }
 
             base.Update(gameTime);
         }

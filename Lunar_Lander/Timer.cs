@@ -22,6 +22,7 @@ namespace Lunar_Lander
             m_remainingTime -= gameTime.ElapsedGameTime.Milliseconds;
         }
         public float GetRemainingTime() { return m_remainingTime; }
-        public bool HasExpired() { return m_remainingTime > 0; }
+        public bool HasExpired() { return m_remainingTime <= 0; }
+        public double GetDisplayTime() { return (int)(m_remainingTime / 1000) + 1; }
     }
 }

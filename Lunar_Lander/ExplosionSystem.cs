@@ -10,12 +10,15 @@ namespace Lunar_Lander
     internal class ExplosionSystem : ParticleSystem
     {
         Lander m_lander;
-        bool m_hasExploded;
         
         public ExplosionSystem(Lander lander, int sizeMean, int sizeStdDev, float speedMean, float speedStdDev, int lifetimeMean, int lifetimeStdDev) : base(lander.position, sizeMean, sizeStdDev, speedMean, speedStdDev, lifetimeMean, lifetimeStdDev)
         {
             m_lander = lander;
-            m_hasExploded = false;
+            for (int i = 0; i < 100; i++)
+            {
+                var particle = create();
+                m_particles.Add(particle.name, particle);
+            }
         }
 
         protected override Particle create()
@@ -30,7 +33,7 @@ namespace Lunar_Lander
 
             return p;
         }
-        public void update(GameTime gameTime, WinState winState)
+        public override void update(GameTime gameTime)
         {
             // Update existing particles
             List<long> removeMe = new List<long>();
@@ -46,17 +49,6 @@ namespace Lunar_Lander
             foreach (long key in removeMe)
             {
                 m_particles.Remove(key);
-            }
-
-            // Generate some new particles
-            if (winState == WinState.Lost && !m_hasExploded)
-            {
-                for (int i = 0; i < 100; i++)
-                {
-                    var particle = create();
-                    m_particles.Add(particle.name, particle);
-                }
-                m_hasExploded = true;
             }
         }
     }

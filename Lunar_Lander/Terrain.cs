@@ -12,12 +12,14 @@ namespace Lunar_Lander
         private List<Line> m_terrainLines;
         Random random;
         public int yBottom;
-        public Terrain(Coordinate start, Coordinate end, float s, int initialPartitions, int landingZones, int yBottom, int depth) 
+        private int m_maxHeight;
+        public Terrain(Coordinate start, Coordinate end, float s, int initialPartitions, int landingZones, int yBottom, int maxHeight, int depth) 
         {
             Line initialLine = new Line(start, end);
             this.m_terrainLines = new List<Line>();
             this.random = new Random();
             this.yBottom = yBottom;
+            m_maxHeight = maxHeight;
 
             for (float i = 0; i < initialPartitions; i++)
             {
@@ -62,7 +64,8 @@ namespace Lunar_Lander
                     else
                     {
                         Coordinate midpoint = line.midpoint;
-                        float newY = Math.Max(midpoint.Y + s * GaussianRandomNumber(0f, 1.0f) * Math.Abs(line.dx),0.0f);
+                        float newY = Math.Max(midpoint.Y + s * GaussianRandomNumber(0f, 1.0f) * Math.Abs(line.dx),m_maxHeight);
+                        newY = Math.Min(newY, yBottom);
                         Line leftLine = new Line(line.p1, new Coordinate(midpoint.X, newY));
                         Line rightLine = new Line(new Coordinate(midpoint.X, newY), line.p2);
                         terrainLines.Add(leftLine);

@@ -24,7 +24,6 @@ namespace Lunar_Lander
             m_graphics.GraphicsDevice.RasterizerState = new RasterizerState
             {
                 FillMode = FillMode.Solid,
-                //FillMode = FillMode.WireFrame,
                 CullMode = CullMode.CullCounterClockwiseFace,   // CullMode.None If you want to not worry about triangle winding order
                 MultiSampleAntiAlias = true,
             };

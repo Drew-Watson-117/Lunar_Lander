@@ -10,6 +10,7 @@ namespace Lunar_Lander
     {
         Menu,
         Level1,
+        Level2,
         Credits,
         HighScores,
         Controls
@@ -35,7 +36,7 @@ namespace Lunar_Lander
 
         protected override void Initialize()
         {
-            _graphics.PreferredBackBufferWidth = 1920;
+            _graphics.PreferredBackBufferWidth = 800;
             _graphics.PreferredBackBufferHeight = 1080;
             // Initialize all states and set initial state
             currentState = GameStateEnum.Level1; // TODO: Switch this to menu
@@ -44,8 +45,6 @@ namespace Lunar_Lander
                 state.Initialize(GraphicsDevice, _graphics);
             }
 
-            _graphics.PreferredBackBufferWidth = 1920;
-            _graphics.PreferredBackBufferHeight = 1080;
             _graphics.ApplyChanges();
 
             base.Initialize();

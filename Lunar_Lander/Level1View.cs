@@ -27,8 +27,14 @@ namespace Lunar_Lander
         // Game metadata
         public Vector2 m_gravity;
         private float m_metersPerUnit;
-        private float verticalSpeedThreshold = 5f;
-        private WinState winState = WinState.None;
+        private float verticalSpeedThreshold = 2f;
+
+        public delegate GameStateEnum UpdateFunction(GameTime gameTime);
+        UpdateFunction m_updateFunction;
+        public delegate void DrawFunction(GameTime gameTime);
+        DrawFunction m_drawFunction;
+
+        Timer m_nextLevelTimer;
 
         // Game entities and renderers
         public Lander m_lander;
@@ -40,6 +46,8 @@ namespace Lunar_Lander
         public ParticleSystemRenderer m_propolsionParticleSystemRenderer;
 
         Texture2D landerTexture;
+        Texture2D backgroundTexture;
+        Texture2D rectangleTexture;
         SpriteFont roboto;
         #endregion
         public Level1View(GameStateEnum myState) : base(myState)
@@ -55,18 +63,19 @@ namespace Lunar_Lander
             Vector2 initialMomentum = new Vector2(0, 0);
             m_lander = new Lander(initialPos,initialAngle, initialMomentum, 40f);
 
-            float surfaceRoughness = 2f;
+            float surfaceRoughness = 4f;
             int recursionDepth = 5;
             m_terrain = new Terrain(
                 new Coordinate(0, 2f / 3f * graphics.PreferredBackBufferHeight),
                 new Coordinate(graphics.PreferredBackBufferWidth, 2f / 3f * graphics.PreferredBackBufferHeight),
-                surfaceRoughness, 20, 2, graphics.PreferredBackBufferHeight, recursionDepth);
+                surfaceRoughness, 10, 2, graphics.PreferredBackBufferHeight, (int)initialPos.Y+50, recursionDepth);
 
-            m_explosionParticleSystem = new ExplosionSystem(m_lander, 10, 5, 0.12f, 0.05f, 1000, 200);
             m_propolsionParticleSystem = new PropolsionSystem(m_lander, 10, 5, 0.30f, 0.05f, 500, 100);
             m_explosionParticleSystemRenderer = new ParticleSystemRenderer("explosion");
             m_propolsionParticleSystemRenderer = new ParticleSystemRenderer("propolsion");
 
+            m_updateFunction = this.MainUpdate;
+            m_drawFunction = this.MainDraw;
             m_nextState = m_myState;
             m_keyboard = new KeyboardInput();
             this.RegisterCommands();
@@ -87,9 +96,10 @@ namespace Lunar_Lander
         public override void LoadContent(ContentManager contentManager)
         {
             m_terrainRenderer = new TerrainRenderer(m_terrain, Color.Orange, m_graphics);
-            //landerTexture = contentManager.Load<Texture2D>("Lander");
             landerTexture = contentManager.Load<Texture2D>("Lander2");
             roboto = contentManager.Load<SpriteFont>("roboto");
+            backgroundTexture = contentManager.Load<Texture2D>("space");
+            rectangleTexture = contentManager.Load<Texture2D>("whiteRectangle");
             m_explosionParticleSystemRenderer.LoadContent(contentManager);
             m_propolsionParticleSystemRenderer.LoadContent(contentManager);
         }
@@ -102,29 +112,26 @@ namespace Lunar_Lander
 
         public override GameStateEnum Update(GameTime gameTime)
         {
+            return m_updateFunction(gameTime);
+        }
+
+
+        #region Update Functions
+
+        public GameStateEnum MainUpdate(GameTime gameTime)
+        {
             // Set next state to my state at the beginning of each update
             m_nextState = m_myState;
             this.ProcessInput(gameTime);
 
-            // Update lander if there is no win or loss
-            if (winState == WinState.None)
-            {
-                // Add gravity to the lander's momentum
-                m_lander.momentum += m_gravity * m_lander.mass;
-                // Update lander's position and orientation
-                m_lander.updatePosition();
-                m_lander.updateOrientation();
-            }
-            else // Unregister lander inputs
-            {
-                m_keyboard.registerCommand(Keys.Up, false, (GameTime gameTime, float value) => { });
-                m_keyboard.registerCommand(Keys.Left, false, (GameTime gameTime, float value) => { });
-                m_keyboard.registerCommand(Keys.Right, false, (GameTime gameTime, float value) => { });
-            }
+            // Add gravity to the lander's momentum
+            m_lander.momentum += m_gravity * m_lander.mass;
+            // Update lander's position and orientation
+            m_lander.updatePosition();
+            m_lander.updateOrientation();
 
             //Update particle system
             m_propolsionParticleSystem.update(gameTime);
-            m_explosionParticleSystem.update(gameTime, winState);
 
             // Check if the lander has collided with terrain
             foreach (Line line in m_terrain.GetLines())
@@ -133,12 +140,23 @@ namespace Lunar_Lander
                 {
                     if (line.isLandingZone && m_lander.isBelowVerticalSpeed(verticalSpeedThreshold) && m_lander.isStraight())
                     {
-                        winState = WinState.Won;
-                        m_lander.hasLanded = true;
+                        // Unregister lander controls
+                        m_keyboard.registerCommand(Keys.Up, false, (GameTime gameTime, float value) => { });
+                        m_keyboard.registerCommand(Keys.Left, false, (GameTime gameTime, float value) => { });
+                        m_keyboard.registerCommand(Keys.Right, false, (GameTime gameTime, float value) => { });
+
+                        // Create 5s timer
+                        m_nextLevelTimer = new Timer(5000);
+
+                        m_updateFunction = WonUpdate;
+                        m_drawFunction = WonDraw;
                     }
                     else
                     {
-                        winState = WinState.Lost;
+                        // Add one time loss logic
+                        m_explosionParticleSystem = new ExplosionSystem(m_lander, 10, 5, 0.12f, 0.05f, 1000, 200);
+                        m_updateFunction = LostUpdate;
+                        m_drawFunction = LostDraw;
                     }
                 }
             }
@@ -150,46 +168,79 @@ namespace Lunar_Lander
             return m_nextState;
         }
 
+        public GameStateEnum WonUpdate(GameTime gameTime)
+        {
+            this.ProcessInput(gameTime);
+            m_nextLevelTimer.Update(gameTime);
+            if (m_nextLevelTimer.HasExpired())
+            {
+                return GameStateEnum.Level2;
+            }
+            else return m_myState;
+        }
+
+        public GameStateEnum LostUpdate(GameTime gameTime)
+        {
+            this.ProcessInput(gameTime);
+            m_explosionParticleSystem.update(gameTime);
+            return m_myState;
+        }
+
+        #endregion
         public override void Draw(GameTime gameTime)
         {
             m_spriteBatch.Begin();
 
-            // Render Particle Effects
-            m_propolsionParticleSystemRenderer.draw(m_spriteBatch, m_propolsionParticleSystem);
-            m_explosionParticleSystemRenderer.draw(m_spriteBatch, m_explosionParticleSystem);
-
-            // Draw Lander
-            if (winState != WinState.Lost)
-            {
-                int landerWidth = 100;
-                int landerHeight = 100;
-                Rectangle landerRect = new Rectangle((int)m_lander.position.X, (int)m_lander.position.Y, landerWidth, landerHeight);
-                m_spriteBatch.Draw(landerTexture, landerRect, null, Color.White, m_lander.getAngleRadians(), new Vector2(landerTexture.Width / 2, landerTexture.Height / 2), SpriteEffects.None, 0);
-            }
-
-            //Draw Controls
-            this.DrawControls(new Vector2(800, 100), Color.Green, Color.White);
-            
-
-            if (winState == WinState.Lost)
-            {
-                m_spriteBatch.DrawString(roboto, "You Lose", new Vector2(200, 200), Color.Black);
-            }
-            if (winState == WinState.Won)
-            {
-                m_spriteBatch.DrawString(roboto, "You Win!", new Vector2(200, 220), Color.Black);
-            }
-
-
-            // Render Terrain
-            m_terrainRenderer.Draw();
-
-
+            // Render background
+            m_spriteBatch.Draw(backgroundTexture, new Rectangle(0, 0, m_graphics.PreferredBackBufferWidth, m_graphics.PreferredBackBufferHeight), null, Color.White, 0, new Vector2(), SpriteEffects.None, 0);
+            m_drawFunction(gameTime);
 
             m_spriteBatch.End();
+            // Render terrain after spriteBatch.End()
+            m_terrainRenderer.Draw();
+
         }
 
-        
+        #region Draw Methods
+
+        private void MainDraw(GameTime gameTime)
+        {
+
+            // Render Particle Effects
+            m_propolsionParticleSystemRenderer.draw(m_spriteBatch, m_propolsionParticleSystem);
+
+            // Draw Lander
+            int landerWidth = 100;
+            int landerHeight = 100;
+            Rectangle landerRect = new Rectangle((int)m_lander.position.X, (int)m_lander.position.Y, landerWidth, landerHeight);
+            m_spriteBatch.Draw(landerTexture, landerRect, null, Color.White, m_lander.getAngleRadians(), new Vector2(landerTexture.Width / 2, landerTexture.Height / 2), SpriteEffects.None, 0);
+
+            //Draw Controls
+            this.DrawControls(new Vector2(m_graphics.PreferredBackBufferWidth - 310, 100), Color.Green, Color.White);
+
+        }
+
+        private void WonDraw(GameTime gameTime)
+        {
+
+            // Draw Lander
+            int landerWidth = 100;
+            int landerHeight = 100;
+            Rectangle landerRect = new Rectangle((int)m_lander.position.X, (int)m_lander.position.Y, landerWidth, landerHeight);
+            m_spriteBatch.Draw(landerTexture, landerRect, null, Color.White, m_lander.getAngleRadians(), new Vector2(landerTexture.Width / 2, landerTexture.Height / 2), SpriteEffects.None, 0);
+
+            //Draw Controls
+            this.DrawControls(new Vector2(m_graphics.PreferredBackBufferWidth-310, 100), Color.Green, Color.White);
+
+            // Draw Timer
+            m_spriteBatch.Draw(rectangleTexture, new Rectangle(0, 0, m_graphics.PreferredBackBufferWidth, m_graphics.PreferredBackBufferHeight), new Color(Color.Black,0.5f));
+            m_spriteBatch.DrawString(roboto, m_nextLevelTimer.GetDisplayTime().ToString(), new Vector2(m_graphics.PreferredBackBufferWidth / 2, m_graphics.PreferredBackBufferHeight / 2), Color.White);
+        }
+        private void LostDraw(GameTime gameTime)
+        {
+
+            m_explosionParticleSystemRenderer.draw(m_spriteBatch, m_explosionParticleSystem);
+        }
         private void DrawControls(Vector2 pos, Color goodColor, Color badColor)
         {
             int offset = 20;
@@ -199,6 +250,10 @@ namespace Lunar_Lander
                 {"Fuel: " + m_lander.fuel.ToString() + "%", m_lander.fuel > 0f},
                 { "Vertical Speed: " + gameUnitsToMeters(m_lander.momentum.Y/m_lander.mass).ToString() + "m/s", m_lander.isBelowVerticalSpeed(metersToGameUnits(verticalSpeedThreshold))}
             };
+
+            // Draw Background Rectangle
+            m_spriteBatch.Draw(rectangleTexture, new Rectangle((int)pos.X-10, (int)pos.Y-10, 300,100), new Color(Color.Black, 0.5f));
+            // Draw Text
             m_spriteBatch.DrawString(roboto, "Ship Status:", new Vector2(pos.X, pos.Y), Microsoft.Xna.Framework.Color.White);
             int i = 0;
             foreach (string key in controls.Keys)
@@ -215,6 +270,7 @@ namespace Lunar_Lander
             }
         }
 
+        #endregion
         private float gameUnitsToMeters(float gameUnits)
         {
             return m_metersPerUnit* gameUnits;

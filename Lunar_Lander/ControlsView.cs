@@ -12,7 +12,7 @@ namespace Lunar_Lander
 {
     internal class ControlsView : GameStateView
     {
-        private string[] m_menuArray;
+        private (string, Keys)[] m_menuArray;
         private int m_selectedIndex;
 
         public delegate GameStateEnum UpdateFunction(GameTime gameTime);
@@ -27,6 +27,7 @@ namespace Lunar_Lander
         private SpriteFont roboto;
         private Keys m_thrustKey, m_leftKey, m_rightKey;
         public bool remap = false;
+        private Timer m_delayInputTimer;
         private Timer m_flashTimer;
         private Color m_flashingColor;
         public ControlsView(GameStateEnum myState, Keys thrustKey, Keys leftKey, Keys rightKey) : base(myState)
@@ -34,10 +35,10 @@ namespace Lunar_Lander
             m_thrustKey = thrustKey;
             m_leftKey = leftKey;
             m_rightKey = rightKey;
-            m_menuArray = new string[] {
-                "Thrust",
-                "Counterclockwise Rotation",
-                "Clockwise Rotation",
+            m_menuArray = new (string, Keys)[] {
+                ("Thrust: ", m_thrustKey),
+                ("Counterclockwise Rotation: ", m_leftKey),
+                ("Clockwise Rotation: ", m_rightKey),
             };
             m_selectedIndex = 0;
         }
@@ -49,6 +50,7 @@ namespace Lunar_Lander
             m_keyboard = new KeyboardInput();
             m_nextState = m_myState;
             m_flashingColor = Color.White;
+            m_delayInputTimer = new Timer(500);
             
             this.RegisterCommands();
             base.Initialize(graphicsDevice, graphics);
@@ -109,7 +111,15 @@ namespace Lunar_Lander
 
         public override GameStateEnum Update(GameTime gameTime)
         {
-            return m_updateFunction(gameTime);
+            if (m_delayInputTimer.HasExpired())
+            {
+                return m_updateFunction(gameTime);
+            }
+            else
+            {
+                m_delayInputTimer.Update(gameTime);
+                return m_myState;
+            }
         }
 
         private GameStateEnum MainUpdate(GameTime gameTime)
@@ -138,11 +148,17 @@ namespace Lunar_Lander
                     switch (m_selectedIndex)
                     {
                         case 0:
-                            m_thrustKey = key; break;
+                            m_thrustKey = key;
+                            m_menuArray[0].Item2 = m_thrustKey;
+                            break;
                         case 1:
-                            m_leftKey = key; break;
+                            m_leftKey = key;
+                            m_menuArray[1].Item2 = m_leftKey;
+                            break;
                         case 2:
-                            m_rightKey = key; break;
+                            m_rightKey = key;
+                            m_menuArray[2].Item2 = m_rightKey;
+                            break;
                     }
                     remap = true;
                     m_updateFunction = MainUpdate;
@@ -172,7 +188,8 @@ namespace Lunar_Lander
             {
                 Color textColor = Color.White;
                 if (i == m_selectedIndex) textColor = Color.OrangeRed;
-                m_spriteBatch.DrawString(roboto, m_menuArray[i], new Vector2(m_graphics.PreferredBackBufferWidth / 2 - 100, 150 + i * 50), textColor);
+                Keys key = m_menuArray[i].Item2;
+                m_spriteBatch.DrawString(roboto, m_menuArray[i].Item1 + key.ToString(), new Vector2(m_graphics.PreferredBackBufferWidth / 2 - 100, 150 + i * 50), textColor);
             }
 
             m_spriteBatch.End();
@@ -194,7 +211,8 @@ namespace Lunar_Lander
             {
                 Color textColor = Color.White;
                 if (i == m_selectedIndex) textColor = m_flashingColor;
-                m_spriteBatch.DrawString(roboto, m_menuArray[i], new Vector2(m_graphics.PreferredBackBufferWidth / 2 - 100, 150 + i * 50), textColor);
+                Keys key = m_menuArray[i].Item2;
+                m_spriteBatch.DrawString(roboto, m_menuArray[i].Item1 + key.ToString(), new Vector2(m_graphics.PreferredBackBufferWidth / 2 - 100, 150 + i * 50), textColor);
             }
 
             m_spriteBatch.End();

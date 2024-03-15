@@ -9,7 +9,7 @@ namespace Lunar_Lander
 {
 
     [DataContract(Name = "Score")]
-    public class Score
+    public class Score : IComparable<Score>
     {
         /// <summary>
         /// Have to have a default constructor for the XmlSerializer.Deserialize method
@@ -39,7 +39,34 @@ namespace Lunar_Lander
         public ushort Level { get; set; }
         [DataMember()]
         public DateTime TimeStamp { get; set; }
+
         [DataMember()]
         public Dictionary<int, String> keys = new Dictionary<int, string>();
+
+        public int CompareTo(Score other)
+        {
+            if (other == null) return 1;
+            if (this == other) return 0;
+            // If the other score is from a higher level, it is a better score
+            if (this.Level < other.Level) return -1;
+            // If this score is from a higher level, it is a better score
+            else if (this.Level > other.Level) return 1;
+            // If this score has more fuel, it is a better score
+            else if (this.Fuel > other.Fuel) return 1;
+            else if (this.Fuel == other.Fuel) return 0;
+            else return -1;
+        }
+
+        // Define the is greater than operator.
+        public static bool operator >(Score operand1, Score operand2)
+        {
+            return operand1.CompareTo(operand2) > 0;
+        }
+
+        // Define the is less than operator.
+        public static bool operator <(Score operand1, Score operand2)
+        {
+            return operand1.CompareTo(operand2) < 0;
+        }
     }
 }

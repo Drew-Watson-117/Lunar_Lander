@@ -12,24 +12,17 @@ using System.Threading.Tasks;
 namespace Lunar_Lander
 {
 
-    public enum WinState
-    {
-        None,
-        Won,
-        Lost
-    }
-    internal class Level1View : GameStateView
+    internal class Level2View : GameStateView
     {
         #region Class Member Variables
         private KeyboardInput m_keyboard;
         private GameStateEnum m_nextState;
         private Keys m_thrustKey, m_leftKey, m_rightKey;
-        
+
         // Game data
         public Vector2 m_gravity;
         private float m_metersPerUnit;
         private float verticalSpeedThreshold = 2f;
-        Timer m_nextLevelTimer;
 
         // Update and draw function delegates
         public delegate GameStateEnum UpdateFunction(GameTime gameTime);
@@ -58,7 +51,7 @@ namespace Lunar_Lander
         List<Score> m_highScores;
 
         #endregion
-        public Level1View(GameStateEnum myState, Keys thrustKey, Keys leftKey, Keys rightKey) : base(myState)
+        public Level2View(GameStateEnum myState, Keys thrustKey, Keys leftKey, Keys rightKey) : base(myState)
         {
             m_thrustKey = thrustKey;
             m_leftKey = leftKey;
@@ -75,12 +68,12 @@ namespace Lunar_Lander
             Vector2 initialPos = new Vector2(400, 400);
             double initialAngle = 0;
             Vector2 initialMomentum = new Vector2(0, 0);
-            m_lander = new Lander(initialPos,initialAngle, initialMomentum, 40f);
+            m_lander = new Lander(initialPos, initialAngle, initialMomentum, 40f);
 
             float surfaceRoughness = 1f;
-            int recursionDepth = 10;
-            int numLandingZones = 2;
-            int initialPartitions = 10;
+            int recursionDepth = 5;
+            int numLandingZones = 1;
+            int initialPartitions = 15;
             m_terrain = new Terrain(
                 new Coordinate(0, 2f / 3f * graphics.PreferredBackBufferHeight),
                 new Coordinate(graphics.PreferredBackBufferWidth, 2f / 3f * graphics.PreferredBackBufferHeight),
@@ -114,8 +107,8 @@ namespace Lunar_Lander
             m_keyboard.registerCommand(m_leftKey, false, (GameTime gameTime, float value) => { });
             m_keyboard.registerCommand(m_rightKey, false, (GameTime gameTime, float value) => { });
             m_thrustKey = thrustKey;
-            m_leftKey= leftKey;
-            m_rightKey= rightKey;
+            m_leftKey = leftKey;
+            m_rightKey = rightKey;
             m_keyboard.registerCommand(m_thrustKey, false, m_lander.applyThrust);
             m_keyboard.registerCommand(m_leftKey, false, m_lander.rotateCounterClockwise);
             m_keyboard.registerCommand(m_rightKey, false, m_lander.rotateClockwise);
@@ -173,9 +166,6 @@ namespace Lunar_Lander
                         m_keyboard.registerCommand(m_leftKey, false, (GameTime gameTime, float value) => { });
                         m_keyboard.registerCommand(m_rightKey, false, (GameTime gameTime, float value) => { });
 
-                        // Create 5s timer
-                        m_nextLevelTimer = new Timer(5000);
-
                         m_updateFunction = WonUpdate;
                         m_drawFunction = WonDraw;
                     }
@@ -199,14 +189,14 @@ namespace Lunar_Lander
         public GameStateEnum WonUpdate(GameTime gameTime)
         {
             // Write to high scores
-            Score score = new Score(m_lander.fuel, 1);
+            Score score = new Score(m_lander.fuel, 2);
             m_highScores = m_persister.getHighScores();
             if (m_highScores != null)
             {
                 if (m_highScores.Count >= 5)
                 {
-                    for (int i = 0; i < m_highScores.Count; i++) 
-                    { 
+                    for (int i = 0; i < m_highScores.Count; i++)
+                    {
                         if (score > m_highScores[i])
                         {
                             m_highScores[i] = score;
@@ -227,19 +217,15 @@ namespace Lunar_Lander
             m_persister.Save(m_highScores);
 
             this.ProcessInput(gameTime);
-            m_nextLevelTimer.Update(gameTime);
-            if (m_nextLevelTimer.HasExpired())
-            {
-                return GameStateEnum.Level2;
-            }
-            else return m_myState;
+
+            return m_nextState;
         }
 
         public GameStateEnum LostUpdate(GameTime gameTime)
         {
             this.ProcessInput(gameTime);
             m_explosionParticleSystem.update(gameTime);
-            return m_myState;
+            return m_nextState;
         }
 
         #endregion
@@ -288,7 +274,7 @@ namespace Lunar_Lander
             m_spriteBatch.Draw(landerTexture, landerRect, null, Color.White, m_lander.getAngleRadians(), new Vector2(landerTexture.Width / 2, landerTexture.Height / 2), SpriteEffects.None, 0);
 
             //Draw Controls
-            this.DrawControls(new Vector2(m_graphics.PreferredBackBufferWidth-310, 100), Color.Green, Color.White);
+            this.DrawControls(new Vector2(m_graphics.PreferredBackBufferWidth - 310, 100), Color.Green, Color.White);
             m_spriteBatch.End();
 
             // Render terrain after spriteBatch.End()
@@ -296,9 +282,10 @@ namespace Lunar_Lander
 
             // Draw Timer in front of terrain
             m_spriteBatch.Begin();
-            m_spriteBatch.Draw(rectangleTexture, new Rectangle(0, 0, m_graphics.PreferredBackBufferWidth, m_graphics.PreferredBackBufferHeight), new Color(Color.Black,0.5f));
-            m_spriteBatch.DrawString(roboto, m_nextLevelTimer.GetDisplayTime().ToString(), new Vector2(m_graphics.PreferredBackBufferWidth / 2, m_graphics.PreferredBackBufferHeight / 2), Color.White,0,new Vector2(),3f,SpriteEffects.None, 0);
+            m_spriteBatch.Draw(rectangleTexture, new Rectangle(0, 0, m_graphics.PreferredBackBufferWidth, m_graphics.PreferredBackBufferHeight), new Color(Color.Black, 0.5f));
+            m_spriteBatch.DrawString(roboto, "You Win!", new Vector2(m_graphics.PreferredBackBufferWidth / 2, m_graphics.PreferredBackBufferHeight / 2), Color.White, 0, new Vector2(), 3f, SpriteEffects.None, 0);
             m_spriteBatch.End();
+
         }
         private void LostDraw(GameTime gameTime)
         {
@@ -319,9 +306,9 @@ namespace Lunar_Lander
             };
 
             // Draw Background Rectangle
-            m_spriteBatch.Draw(rectangleTexture, new Rectangle((int)pos.X-10, (int)pos.Y-10, 300,100), new Color(Color.Black, 0.75f));
+            m_spriteBatch.Draw(rectangleTexture, new Rectangle((int)pos.X - 10, (int)pos.Y - 10, 300, 100), new Color(Color.Black, 0.75f));
             // Draw Text
-            m_spriteBatch.DrawString(roboto, "Ship Status:", new Vector2(pos.X, pos.Y-5), Microsoft.Xna.Framework.Color.White,0f, new Vector2(), 1.5f, SpriteEffects.None,0);
+            m_spriteBatch.DrawString(roboto, "Ship Status:", new Vector2(pos.X, pos.Y - 5), Microsoft.Xna.Framework.Color.White, 0f, new Vector2(), 1.5f, SpriteEffects.None, 0);
             int i = 0;
             foreach (string key in controls.Keys)
             {
@@ -340,7 +327,7 @@ namespace Lunar_Lander
         #endregion
         private float gameUnitsToMeters(float gameUnits)
         {
-            return m_metersPerUnit* gameUnits;
+            return m_metersPerUnit * gameUnits;
         }
 
         private float metersToGameUnits(float meters)

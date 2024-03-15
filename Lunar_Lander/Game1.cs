@@ -21,21 +21,38 @@ namespace Lunar_Lander
         private Dictionary<GameStateEnum, IGameState> stateDict;
         private GameStateEnum currentState, nextState;
         public Keys thrustKey, leftKey, rightKey;
+        private ControlsPersister m_controlsPersister;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
-            thrustKey = Keys.Up;
-            leftKey = Keys.Left;
-            rightKey = Keys.Right;
+            
+            m_controlsPersister = new ControlsPersister("myControls.json");
+            m_controlsPersister.Load();
+            Controls controls = m_controlsPersister.getControls();
+            if (controls == null)
+            {
+                thrustKey = Keys.Up;
+                leftKey = Keys.Left;
+                rightKey = Keys.Right;
+            }
+            else
+            {
+                thrustKey = controls.ThrustKey;
+                leftKey = controls.LeftKey;
+                rightKey = controls.RightKey;
+            }
 
             stateDict = new Dictionary<GameStateEnum, IGameState>() 
             {
                 { GameStateEnum.Level1, new Level1View(GameStateEnum.Level1, thrustKey, leftKey, rightKey) },
                 { GameStateEnum.Menu, new MenuView(GameStateEnum.Menu) },
                 { GameStateEnum.Controls, new ControlsView(GameStateEnum.Controls, thrustKey, leftKey, rightKey) },
+                { GameStateEnum.HighScores, new HighScoreView(GameStateEnum.HighScores) },
+                { GameStateEnum.Level2, new Level2View(GameStateEnum.Level2, thrustKey, leftKey, rightKey) },
+                { GameStateEnum.Credits, new CreditsView(GameStateEnum.Credits) },
             };
 
         }
@@ -44,6 +61,7 @@ namespace Lunar_Lander
         {
             _graphics.PreferredBackBufferWidth = 800;
             _graphics.PreferredBackBufferHeight = 1080;
+
             // Initialize all states and set initial state
             currentState = GameStateEnum.Menu;
             nextState = currentState;
@@ -68,7 +86,6 @@ namespace Lunar_Lander
 
         protected override void Update(GameTime gameTime)
         {
-
             // Run update for current game state, get next game state
             nextState = stateDict[currentState].Update(gameTime);
             // If controls have been changed, do the remap
@@ -82,6 +99,7 @@ namespace Lunar_Lander
                     state.ReregisterCommands(thrustKey, leftKey, rightKey);
                 }
                 ((ControlsView)stateDict[currentState]).remap = false;
+                m_controlsPersister.Save(new Controls(thrustKey,leftKey,rightKey));
             }
             // Conduct state change
             if (currentState != nextState)

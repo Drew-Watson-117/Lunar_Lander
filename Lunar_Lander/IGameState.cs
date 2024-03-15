@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Lunar_Lander
 {
-    internal interface IGameState
+    public interface IGameState
     {
         void Initialize(GraphicsDevice graphicsDevice, GraphicsDeviceManager graphics);
 

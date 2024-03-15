@@ -25,6 +25,12 @@
 /processorParam:TextureFormat=Color
 /build:explosion.png
 
+#begin explosionSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:explosionSound.mp3
+
 #begin Lander.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -48,6 +54,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Lander2.png
+
+#begin landingSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:landingSound.mp3
+
+#begin landingSoundCropped.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:landingSoundCropped.mp3
 
 #begin propolsion.png
 /importer:TextureImporter
@@ -91,6 +109,12 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:space.jpg
+
+#begin thrustSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:thrustSound.mp3
 
 #begin whiteRectangle.png
 /importer:TextureImporter

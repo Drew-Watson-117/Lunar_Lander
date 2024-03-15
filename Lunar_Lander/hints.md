@@ -22,3 +22,20 @@
 - Look at input demos for remapping
 	- Keyboard.GetState can help get the key pressed
 	- GetKeys can also help
+
+
+Idea for Particle System
+
+- Particle Effect has:
+	- Constructor
+	- Load Content
+	- Update
+
+- Particle System has:
+	- Constructor
+	- Update
+
+- Particle Renderer has:
+	- Constructor
+	- Load Content
+	- Draw

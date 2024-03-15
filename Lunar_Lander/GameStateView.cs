@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Lunar_Lander
 {
-    internal abstract class GameStateView : IGameState
+    public abstract class GameStateView : IGameState
     {
         protected GraphicsDeviceManager m_graphics;
         protected SpriteBatch m_spriteBatch;

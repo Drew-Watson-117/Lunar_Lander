@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Lunar_Lander
 {
-    internal interface IInputDevice
+    public interface IInputDevice
     {
         // Command Delegate is a reference to callback function for the desired command
         public delegate void CommandDelegate(GameTime gameTime, float value);

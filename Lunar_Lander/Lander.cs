@@ -9,7 +9,7 @@ using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Lunar_Lander
 {
-    internal class Lander
+    public class Lander
     {
 
         public Vector2 momentum;
@@ -25,6 +25,7 @@ namespace Lunar_Lander
 
         public float circleRadius;
         public bool isThrusting;
+        public bool isDead = false;
         
         public Lander(Vector2 position, double angle, Vector2 momentum, float circleRadius) 
         {

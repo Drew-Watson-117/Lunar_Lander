@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Lunar_Lander
 {
-    internal class Timer
+    public class Timer
     {
         float m_totalTimeMilliseconds;
         float m_remainingTime;

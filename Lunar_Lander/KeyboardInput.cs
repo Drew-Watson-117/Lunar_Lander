@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Lunar_Lander
 {
-    internal class KeyboardInput : IInputDevice
+    public class KeyboardInput : IInputDevice
     {
         private struct CommandEntry
         {

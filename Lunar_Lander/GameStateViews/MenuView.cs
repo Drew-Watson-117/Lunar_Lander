@@ -18,6 +18,8 @@ namespace Lunar_Lander
 
         private KeyboardInput m_keyboard;
         private GameStateEnum m_nextState;
+        private Timer m_inputDelayTimer;
+
         private Texture2D backgroundTexture;
         private Texture2D rectangleTexture;
         private SpriteFont roboto;
@@ -39,6 +41,7 @@ namespace Lunar_Lander
             m_nextState = m_myState;
             RegisterCommands();
             base.Initialize(graphicsDevice, graphics);
+            m_inputDelayTimer = new Timer(500);
         }
 
         public override void LoadContent(ContentManager contentManager)
@@ -53,7 +56,7 @@ namespace Lunar_Lander
             m_keyboard.registerCommand(Keys.Up, true, MenuUp);
             m_keyboard.registerCommand(Keys.Down, true, MenuDown);
             m_keyboard.registerCommand(Keys.Enter, true, MenuSelect);
-
+            m_keyboard.registerCommand(Keys.Escape, true, (GameTime gameTime, float value) => { m_nextState = GameStateEnum.Exit; });
         }
 
         #region Input Handler Functions
@@ -82,7 +85,8 @@ namespace Lunar_Lander
 
         public override GameStateEnum Update(GameTime gameTime)
         {
-            ProcessInput(gameTime);
+            if (m_inputDelayTimer.HasExpired()) ProcessInput(gameTime);
+            else m_inputDelayTimer.Update(gameTime);
             return m_nextState;
         }
         public override void Draw(GameTime gameTime)

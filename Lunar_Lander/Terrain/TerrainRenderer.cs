@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,6 +14,8 @@ namespace Lunar_Lander
         private Terrain m_terrain;
         private VertexPositionColor[] m_triangleVertices;
         private int[] m_triangleVertexIndices;
+        private VertexPositionColor[] m_lineVertices;
+        private int[] m_lineVertexIndices;
         private GraphicsDeviceManager m_graphics;
         private BasicEffect m_effect;
         public TerrainRenderer(Terrain terrain, Color color, GraphicsDeviceManager graphics)
@@ -70,6 +73,34 @@ namespace Lunar_Lander
                 m_triangleVertexIndices[baseIndex + 4] = baseIndex + 4;
                 m_triangleVertexIndices[baseIndex + 5] = baseIndex + 5;
             }
+
+            // Define line list for terrain outline
+            m_lineVertices = new VertexPositionColor[4 * terrain.GetLines().Count];
+            m_lineVertexIndices = new int[4 * terrain.GetLines().Count];
+            int lineOffset = 1;
+            Color lineColor = Color.OrangeRed;
+            for (int i = 0; i < terrain.GetLines().Count; i++)
+            {
+                int baseIndex = i * 4;
+                Line line = terrain.GetLines()[i];
+                // Vertex 1
+                m_lineVertices[baseIndex].Position = new Vector3(line.p1.X, line.p1.Y, 0);
+                m_lineVertices[baseIndex].Color = lineColor;
+                // Vertex 2
+                m_lineVertices[baseIndex + 1].Position = new Vector3(line.p2.X,line.p2.Y, 0);
+                m_lineVertices[baseIndex + 1].Color = lineColor;
+
+                // Create another line 2px above the first to make the line appear thicker
+                m_lineVertices[baseIndex + 2].Position = new Vector3(line.p1.X, line.p1.Y - lineOffset, 0);
+                m_lineVertices[baseIndex + 2].Color = lineColor;
+                m_lineVertices[baseIndex + 3].Position = new Vector3(line.p2.X, line.p2.Y - lineOffset, 0);
+                m_lineVertices[baseIndex + 3].Color = lineColor;
+                // Indices
+                m_lineVertexIndices[baseIndex] = baseIndex;
+                m_lineVertexIndices[baseIndex + 1] = baseIndex + 1;
+                m_lineVertexIndices[baseIndex + 2] = baseIndex + 2;
+                m_lineVertexIndices[baseIndex + 3] = baseIndex + 3;
+            }
         }
 
         public void Draw()
@@ -77,10 +108,16 @@ namespace Lunar_Lander
             foreach (EffectPass pass in m_effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
+                // Draw Triangles
                 m_graphics.GraphicsDevice.DrawUserIndexedPrimitives(
                     PrimitiveType.TriangleList,
                     m_triangleVertices, 0, m_triangleVertices.Length,
                     m_triangleVertexIndices, 0, m_triangleVertexIndices.Length / 3);
+                // Draw Lines
+                m_graphics.GraphicsDevice.DrawUserIndexedPrimitives(
+                    PrimitiveType.LineList,
+                    m_lineVertices, 0, m_lineVertices.Length,
+                    m_lineVertexIndices, 0, m_lineVertexIndices.Length / 2);
             }
         }
     }

@@ -13,7 +13,8 @@ namespace Lunar_Lander
         Level2,
         Credits,
         HighScores,
-        Controls
+        Controls,
+        Exit
     }
     public class Game1 : Game
     {
@@ -61,6 +62,7 @@ namespace Lunar_Lander
         {
             _graphics.PreferredBackBufferWidth = 800;
             _graphics.PreferredBackBufferHeight = 1080;
+            _graphics.ApplyChanges();
 
             // Initialize all states and set initial state
             currentState = GameStateEnum.Menu;
@@ -70,7 +72,6 @@ namespace Lunar_Lander
                 state.Initialize(GraphicsDevice, _graphics);
             }
 
-            _graphics.ApplyChanges();
 
             base.Initialize();
         }
@@ -88,6 +89,11 @@ namespace Lunar_Lander
         {
             // Run update for current game state, get next game state
             nextState = stateDict[currentState].Update(gameTime);
+            // If next state is exit, quit
+            if (nextState == GameStateEnum.Exit)
+            {
+                this.Exit();
+            }
             // If controls have been changed, do the remap
             if (currentState == GameStateEnum.Controls && ((ControlsView)stateDict[currentState]).remap)
             {
@@ -102,7 +108,7 @@ namespace Lunar_Lander
                 m_controlsPersister.Save(new Controls(thrustKey,leftKey,rightKey));
             }
             // Conduct state change
-            if (currentState != nextState)
+            if (currentState != nextState && nextState != GameStateEnum.Exit)
             {
                 stateDict[nextState].Initialize(GraphicsDevice, _graphics);
                 stateDict[nextState].LoadContent(Content);

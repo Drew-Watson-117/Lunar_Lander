@@ -25,6 +25,17 @@ namespace Lunar_Lander
         private float m_metersPerUnit;
         private float verticalSpeedThreshold = 2f;
         private Timer m_thrustSoundTimer;
+        private int landerWidth = 50;
+        private int landerHeight = 50;
+        private float collisionRadius = 20f;
+
+        // Pause menu variables
+        private (string, GameStateEnum)[] m_menuArray = new (string, GameStateEnum)[]{
+                ("Continue", GameStateEnum.Level2),
+                ("Main Menu", GameStateEnum.Menu),
+                ("Quit", GameStateEnum.Exit)
+            };
+        private int m_selectedIndex = 0;
 
         // Update and draw function delegates
         public delegate GameStateEnum UpdateFunction(GameTime gameTime);
@@ -71,12 +82,12 @@ namespace Lunar_Lander
             Vector2 initialPos = new Vector2(400, 400);
             double initialAngle = 0;
             Vector2 initialMomentum = new Vector2(0, 0);
-            m_lander = new Lander(initialPos, initialAngle, initialMomentum, 40f);
+            m_lander = new Lander(initialPos, initialAngle, initialMomentum, collisionRadius);
 
-            float surfaceRoughness = 1f;
-            int recursionDepth = 5;
+            float surfaceRoughness = 3f;
+            int recursionDepth = 4;
             int numLandingZones = 1;
-            int initialPartitions = 15;
+            int initialPartitions = 12;
             m_terrain = new Terrain(
                 new Coordinate(0, 2f / 3f * graphics.PreferredBackBufferHeight),
                 new Coordinate(graphics.PreferredBackBufferWidth, 2f / 3f * graphics.PreferredBackBufferHeight),
@@ -103,10 +114,35 @@ namespace Lunar_Lander
             m_keyboard.registerCommand(m_thrustKey, false, m_lander.applyThrust);
             m_keyboard.registerCommand(m_leftKey, false, m_lander.rotateCounterClockwise);
             m_keyboard.registerCommand(m_rightKey, false, m_lander.rotateClockwise);
-            m_keyboard.registerCommand(Keys.Escape, true, (gameTime, value) => { m_nextState = GameStateEnum.Menu; });
-
+            m_keyboard.registerCommand(Keys.Escape, true, OnPause);
         }
 
+        #region Pause Input Handler Functions
+
+        private void OnPause(GameTime gameTime, float value)
+        {
+            m_updateFunction = PauseUpdate;
+            m_drawFunction = PauseDraw;
+        }
+        private void MenuUp(GameTime gameTime, float value)
+        {
+            m_selectedIndex--;
+            if (m_selectedIndex < 0) m_selectedIndex = m_menuArray.Length - 1;
+        }
+
+        private void MenuDown(GameTime gameTime, float value)
+        {
+            m_selectedIndex++;
+            if (m_selectedIndex >= m_menuArray.Length) m_selectedIndex = 0;
+        }
+
+        private void MenuSelect(GameTime gameTime, float value)
+        {
+            GameStateEnum state = m_menuArray[m_selectedIndex].Item2;
+            if (state == m_myState) { m_updateFunction = MainUpdate; m_drawFunction = MainDraw; }
+            else { m_nextState = state; }
+        }
+        #endregion
         public override void ReregisterCommands(Keys thrustKey, Keys leftKey, Keys rightKey)
         {
             m_keyboard.registerCommand(m_thrustKey, false, (gameTime, value) => { });
@@ -142,6 +178,18 @@ namespace Lunar_Lander
 
         public override GameStateEnum Update(GameTime gameTime)
         {
+            // Check if game is paused
+            if (m_updateFunction == PauseUpdate)
+            {
+                m_keyboard.registerCommand(m_thrustKey, false, (GameTime gameTime, float value) => { });
+                m_keyboard.registerCommand(m_leftKey, false, (GameTime gameTime, float value) => { });
+                m_keyboard.registerCommand(m_rightKey, false, (GameTime gameTime, float value) => { });
+                m_keyboard.registerCommand(Keys.Up, true, MenuUp);
+                m_keyboard.registerCommand(Keys.Down, true, MenuDown);
+                m_keyboard.registerCommand(Keys.Enter, true, MenuSelect);
+                m_keyboard.registerCommand(Keys.Escape, true, (GameTime gameTime, float value) => { m_updateFunction = MainUpdate; m_drawFunction = MainDraw; });
+
+            }
             return m_updateFunction(gameTime);
         }
 
@@ -252,6 +300,19 @@ namespace Lunar_Lander
             return m_nextState;
         }
 
+        public GameStateEnum PauseUpdate(GameTime gameTime)
+        {
+            m_nextState = m_myState;
+            ProcessInput(gameTime);
+            // If game is unpaused, reregister control inputs
+            if (m_updateFunction == MainUpdate)
+            {
+                this.RegisterCommands();
+            }
+            return m_nextState;
+        }
+
+
         #endregion
         public override void Draw(GameTime gameTime)
         {
@@ -261,7 +322,6 @@ namespace Lunar_Lander
             m_spriteBatch.End();
             // Call draw function
             m_drawFunction(gameTime);
-
 
         }
 
@@ -274,8 +334,6 @@ namespace Lunar_Lander
             m_particleSystemRenderer.Draw(m_spriteBatch);
 
             // Draw Lander
-            int landerWidth = 100;
-            int landerHeight = 100;
             Rectangle landerRect = new Rectangle((int)m_lander.position.X, (int)m_lander.position.Y, landerWidth, landerHeight);
             m_spriteBatch.Draw(landerTexture, landerRect, null, Color.White, m_lander.getAngleRadians(), new Vector2(landerTexture.Width / 2, landerTexture.Height / 2), SpriteEffects.None, 0);
 
@@ -292,8 +350,6 @@ namespace Lunar_Lander
         {
             m_spriteBatch.Begin();
             // Draw Lander
-            int landerWidth = 100;
-            int landerHeight = 100;
             Rectangle landerRect = new Rectangle((int)m_lander.position.X, (int)m_lander.position.Y, landerWidth, landerHeight);
             m_spriteBatch.Draw(landerTexture, landerRect, null, Color.White, m_lander.getAngleRadians(), new Vector2(landerTexture.Width / 2, landerTexture.Height / 2), SpriteEffects.None, 0);
 
@@ -318,6 +374,41 @@ namespace Lunar_Lander
             m_spriteBatch.End();
             // Render terrain after spriteBatch.End()
             m_terrainRenderer.Draw();
+        }
+
+        private void PauseDraw(GameTime gameTime)
+        {
+            m_spriteBatch.Begin();
+            // Render Particle Effects
+            m_particleSystemRenderer.Draw(m_spriteBatch);
+
+            // Draw Lander
+            if (!m_lander.isDead)
+            {
+                Rectangle landerRect = new Rectangle((int)m_lander.position.X, (int)m_lander.position.Y, landerWidth, landerHeight);
+                m_spriteBatch.Draw(landerTexture, landerRect, null, Color.White, m_lander.getAngleRadians(), new Vector2(landerTexture.Width / 2, landerTexture.Height / 2), SpriteEffects.None, 0);
+            }
+
+            //Draw Controls
+            DrawControls(new Vector2(m_graphics.PreferredBackBufferWidth - 310, 100), Color.Green, Color.White);
+            m_spriteBatch.End();
+
+            // Render terrain after spriteBatch.End()
+            m_terrainRenderer.Draw();
+
+            // Draw Menu in front of terrain
+            m_spriteBatch.Begin();
+            m_spriteBatch.Draw(rectangleTexture, new Rectangle(0, 0, m_graphics.PreferredBackBufferWidth, m_graphics.PreferredBackBufferHeight), new Color(Color.Black, 0.5f));
+            m_spriteBatch.DrawString(roboto, "Game Paused", new Vector2(m_graphics.PreferredBackBufferWidth / 2 - 100, 100), Color.Orange, 0f, new Vector2(), 2f, SpriteEffects.None, 0);
+            for (int i = 0; i < m_menuArray.Length; i++)
+            {
+                Color textColor = Color.White;
+                if (i == m_selectedIndex) textColor = Color.OrangeRed;
+                m_spriteBatch.DrawString(roboto, m_menuArray[i].Item1, new Vector2(m_graphics.PreferredBackBufferWidth / 2 - 100, 150 + i * 50), textColor);
+            }
+            m_spriteBatch.End();
+
+
         }
         private void DrawControls(Vector2 pos, Color goodColor, Color badColor)
         {

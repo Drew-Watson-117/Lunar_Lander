@@ -36,17 +36,17 @@ namespace Lunar_Lander
             this.momentum = momentum; // Momentum of lander
             mass = 25f;
             fuel = 100f;
-            thrust = 1f; // Acceleration applied to lander
+            thrust = 0.75f; // Acceleration applied to lander
             fuelLossRate = 0.01f;
             momentOfInertia = 0.002f; // 1/rotational_inertia of the lander
         }
 
         public void applyThrust(GameTime gameTime, float value)
         {
-            isThrusting = true;
             float dt = gameTime.ElapsedGameTime.Milliseconds;
             if (fuel > 0)
             {
+                isThrusting = true;
                 momentum += orientation * thrust / mass * dt;
                 fuel -= dt * fuelLossRate;
             }

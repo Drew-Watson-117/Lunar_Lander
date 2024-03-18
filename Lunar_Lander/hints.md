@@ -39,3 +39,8 @@ Idea for Particle System
 	- Constructor
 	- Load Content
 	- Draw
+
+## Things to Ask Dean About
+
+- Fixing Particle Renderer to be able to do WireFrame so I can do outline
+- How I can play with my Terrain Parameters to make my terrain look better

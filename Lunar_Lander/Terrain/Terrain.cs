@@ -13,6 +13,7 @@ namespace Lunar_Lander
         Random random;
         public int yBottom;
         private int m_maxHeight;
+        private int m_initialDepth;
         public Terrain(Coordinate start, Coordinate end, float s, int initialPartitions, int landingZones, int yBottom, int maxHeight, int depth)
         {
             Line initialLine = new Line(start, end);
@@ -20,7 +21,7 @@ namespace Lunar_Lander
             random = new Random();
             this.yBottom = yBottom;
             m_maxHeight = maxHeight;
-
+            m_initialDepth = depth;
             for (float i = 0; i < initialPartitions; i++)
             {
                 float initialPartitionX1 = i / initialPartitions * initialLine.dx;
@@ -37,7 +38,7 @@ namespace Lunar_Lander
                 // Generate randome index that is not touching an edge
                 int zoneIndex = random.Next(1, initialPartitions - 1);
                 Line zonePartition = m_terrainLines[zoneIndex];
-                if (!zonePartition.isLandingZone)
+                if (!zonePartition.isLandingZone && !m_terrainLines[zoneIndex+1].isLandingZone && !m_terrainLines[zoneIndex-1].isLandingZone)
                 {
                     zonePartition.isLandingZone = true;
                     labeledZones++;
@@ -56,28 +57,20 @@ namespace Lunar_Lander
                 Line line = lineQueue.Dequeue();
                 if (!line.isLandingZone)
                 {
-
-                    if (random.NextDouble() < 0.25f) // There is a chance we don't do the midpoint splitting so the surface looks more non-uniform
-                    {
-                        terrainLines.Add(line);
-                    }
-                    else
-                    {
-                        Coordinate midpoint = line.midpoint;
-                        float newY = Math.Max(midpoint.Y + s * GaussianRandomNumber(0f, 1.0f) * Math.Abs(line.dx), m_maxHeight);
-                        newY = Math.Min(newY, yBottom);
-                        Line leftLine = new Line(line.p1, new Coordinate(midpoint.X, newY));
-                        Line rightLine = new Line(new Coordinate(midpoint.X, newY), line.p2);
-                        terrainLines.Add(leftLine);
-                        terrainLines.Add(rightLine);
-                    }
+                    Coordinate midpoint = line.midpoint;
+                    float newY = Math.Max(midpoint.Y + s * GaussianRandomNumber(0f, 0.375f) * Math.Abs(line.dx), m_maxHeight);
+                    newY = Math.Min(newY, yBottom);
+                    Line leftLine = new Line(line.p1, new Coordinate(midpoint.X, newY));
+                    Line rightLine = new Line(new Coordinate(midpoint.X, newY), line.p2);
+                    terrainLines.Add(leftLine);
+                    terrainLines.Add(rightLine);
                 }
                 else
                 {
                     terrainLines.Add(line);
                 }
             }
-            return createTerrain(terrainLines, 2f / 3f * s, depth - 1);
+            return createTerrain(terrainLines, 6f / 8f * s, depth - 1);
         }
 
         private float GaussianRandomNumber(float mean, float std)

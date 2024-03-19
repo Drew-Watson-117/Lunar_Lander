@@ -91,17 +91,13 @@ namespace Lunar_Lander
             Vector2 initialMomentum = new Vector2(0, 0);
             m_lander = new Lander(initialPos, initialAngle, initialMomentum, collisionRadius);
 
-            float surfaceRoughness = 2.5f;
-            int recursionDepth = 4;
+            float surfaceRoughness = 2f; // 3f
+            int recursionDepth = 6; // 6
             int numLandingZones = 2;
-            int initialPartitions = 10;
-            m_terrain = new Terrain(
-                new Coordinate(0, 2f / 3f * graphics.PreferredBackBufferHeight),
-                new Coordinate(graphics.PreferredBackBufferWidth, 2f / 3f * graphics.PreferredBackBufferHeight),
-                surfaceRoughness, initialPartitions, numLandingZones, graphics.PreferredBackBufferHeight, (int)initialPos.Y + 50, recursionDepth);
+            m_terrain = new Terrain(graphics.PreferredBackBufferWidth, 2, 100, graphics.PreferredBackBufferHeight, (int)initialPos.Y + 50, surfaceRoughness, recursionDepth);
 
             m_particleSystem = new ParticleSystem(new ParticleEffect[]{
-                new PropolsionEffect(m_lander, "propolsion", 10, 5, 0.30f, 0.05f, 500, 100),
+                new PropolsionEffect(m_lander, "propolsion", 10, 5, 0.30f, 0.05f, 400, 100),
                 new ExplosionEffect(m_lander,"explosion", 10, 5, 0.12f, 0.05f, 1000, 200)});
             m_particleSystemRenderer = new ParticleSystemRenderer(m_particleSystem);
 
@@ -114,13 +110,6 @@ namespace Lunar_Lander
             m_thrustSoundTimer = new Timer(0);
 
             base.Initialize(graphicsDevice, graphics);
-
-            m_graphics.GraphicsDevice.RasterizerState = new RasterizerState
-            {
-                FillMode = FillMode.WireFrame,
-                CullMode = CullMode.CullCounterClockwiseFace,   // CullMode.None If you want to not worry about triangle winding order
-                MultiSampleAntiAlias = true,
-            };
 
         }
 
@@ -237,7 +226,19 @@ namespace Lunar_Lander
             //Update particle system
             m_particleSystem.Update(gameTime);
 
-            // Check if the lander has collided with terrain
+            // Check if the lander has collided with terrain or edges of the screen
+            Line screenLeft = new Line(0f, m_graphics.PreferredBackBufferHeight, 0f, 0f);
+            Line screenRight = new Line(m_graphics.PreferredBackBufferWidth, m_graphics.PreferredBackBufferHeight, m_graphics.PreferredBackBufferWidth, 0f);
+            Line screenTop = new Line(0, 0, m_graphics.PreferredBackBufferWidth, 0);
+            if (m_lander.lineCollision(screenTop) || m_lander.lineCollision(screenLeft) || m_lander.lineCollision(screenRight))
+            {
+                // Add one time loss logic
+                m_lander.isDead = true;
+                m_updateFunction = LostUpdate;
+                m_drawFunction = LostDraw;
+                // Play explosion sound effect
+                explosionSound.Play();
+            }
             foreach (Line line in m_terrain.GetLines())
             {
                 if (m_lander.lineCollision(line))
@@ -410,8 +411,6 @@ namespace Lunar_Lander
                 m_spriteBatch.Draw(landerTexture, landerRect, null, Color.White, m_lander.getAngleRadians(), new Vector2(landerTexture.Width / 2, landerTexture.Height / 2), SpriteEffects.None, 0);
             }
 
-            //Draw Controls
-            DrawControls(new Vector2(m_graphics.PreferredBackBufferWidth - 310, 100), Color.Green, Color.White);
             m_spriteBatch.End();
 
             // Render terrain after spriteBatch.End()

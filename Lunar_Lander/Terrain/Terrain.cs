@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,6 @@ namespace Lunar_Lander
         Random random;
         public int yBottom;
         private int m_maxHeight;
-        private int m_initialDepth;
         public Terrain(Coordinate start, Coordinate end, float s, int initialPartitions, int landingZones, int yBottom, int maxHeight, int depth)
         {
             Line initialLine = new Line(start, end);
@@ -21,7 +21,6 @@ namespace Lunar_Lander
             random = new Random();
             this.yBottom = yBottom;
             m_maxHeight = maxHeight;
-            m_initialDepth = depth;
             for (float i = 0; i < initialPartitions; i++)
             {
                 float initialPartitionX1 = i / initialPartitions * initialLine.dx;
@@ -47,6 +46,34 @@ namespace Lunar_Lander
             m_terrainLines = createTerrain(m_terrainLines, s, depth);
         }
 
+        public Terrain(int totalWidth, int numLandingZones, int landingWidth, int yBottom, int maxHeight, float s, int depth)
+        {
+            random = new Random();
+            this.yBottom = yBottom;
+            m_maxHeight = maxHeight;
+            m_terrainLines = new List<Line>();
+            Coordinate startPoint = new Coordinate(0, random.Next(maxHeight, yBottom));
+            // Generate random landing zones
+            Coordinate lastEnd = startPoint;
+            for (int i = 0; i < numLandingZones; i++)
+            {
+                // Generate random point for start of zone
+                int randomX = random.Next((int)lastEnd.X ,(i+1) * (totalWidth-landingWidth)/numLandingZones);
+                int randomY = random.Next(maxHeight, yBottom);
+                Coordinate start = new Coordinate(randomX, randomY);
+                Coordinate end = new Coordinate(randomX + landingWidth, randomY);
+                // Form line from last end to this start
+                m_terrainLines.Add(new Line(lastEnd, start));
+                // Form landing zone line
+                Line landingZone = new Line(start, end);
+                landingZone.isLandingZone = true;
+                m_terrainLines.Add(landingZone);
+                lastEnd = end;
+            }
+            m_terrainLines.Add(new Line(lastEnd, new Coordinate(totalWidth, random.Next(maxHeight, yBottom))));
+            // Recursively comb terrain
+            m_terrainLines = createTerrain(m_terrainLines, s, depth);
+        }
         private List<Line> createTerrain(List<Line> initialLines, float s, int depth)
         {
             if (depth <= 0) return initialLines;
@@ -70,7 +97,7 @@ namespace Lunar_Lander
                     terrainLines.Add(line);
                 }
             }
-            return createTerrain(terrainLines, 6f / 8f * s, depth - 1);
+            return createTerrain(terrainLines, 1f/1.1f * s, depth - 1);
         }
 
         private float GaussianRandomNumber(float mean, float std)
@@ -107,7 +134,19 @@ namespace Lunar_Lander
 
             dx = p2.X - p1.X;
             dy = y(dx);
-            midpoint = new Coordinate(p1.X + dx / 2, y(p1.X + dx));
+            midpoint = new Coordinate(p1.X + dx / 2, (p1.Y+p2.Y)/2);
+        }
+
+        public Line(float x1, float y1, float x2, float y2)
+        {
+            this.p1 = new Coordinate(x1,y1);
+            this.p2 = new Coordinate(x2,y2);
+            slope = (p2.Y - p1.Y) / (p2.X - p1.X);
+            isLandingZone = false;
+
+            dx = p2.X - p1.X;
+            dy = y(dx);
+            midpoint = new Coordinate(p1.X + dx / 2, (p1.Y + p2.Y) / 2);
         }
 
         public float y(float x)

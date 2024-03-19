@@ -71,10 +71,10 @@ namespace Lunar_Lander
             m_spriteBatch.Draw(rectangleTexture, new Rectangle(m_graphics.PreferredBackBufferWidth / 4, 100, m_graphics.PreferredBackBufferWidth / 2, m_graphics.PreferredBackBufferHeight - 200), new Color(Color.Black, 0.5f));
 
             // Render text
-            m_spriteBatch.DrawString(roboto, "Credits", new Vector2(m_graphics.PreferredBackBufferWidth / 2 - 100, 100), Color.Orange, 0f, new Vector2(), 2f, SpriteEffects.None, 0);
+            m_spriteBatch.DrawString(roboto, "Credits", new Vector2(m_graphics.PreferredBackBufferWidth / 2 - 75, 100), Color.Orange, 0f, new Vector2(), 2f, SpriteEffects.None, 0);
             for (int i = 0; i < m_creditsArray.Length; i++)
             {
-                m_spriteBatch.DrawString(roboto, m_creditsArray[i], new Vector2(m_graphics.PreferredBackBufferWidth / 2 - 100, 150 + i * 50), Color.White);
+                m_spriteBatch.DrawString(roboto, m_creditsArray[i], new Vector2(m_graphics.PreferredBackBufferWidth / 2 - 150, 150 + i * 50), Color.White);
             }
 
             m_spriteBatch.End();

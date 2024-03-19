@@ -5,13 +5,25 @@
   <Config />
   <SourceFiles>
     <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/explosion.png</File>
+    <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/explosionSound.mp3</File>
     <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/Lander.png</File>
     <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/Lander2.png</File>
+    <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/landingSound.mp3</File>
+    <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/landingSoundCropped.mp3</File>
     <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/propolsion.png</File>
     <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/Rectangle.png</File>
     <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/roboto.spritefont</File>
+    <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/space.jpg</File>
+    <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/thrustSound.mp3</File>
+    <File>C:/Users/drewz/School_Stuff/Spring_2024/Game_Development/Homework/Project_3_Mono/Lunar_Lander/Lunar_Lander/Content/whiteRectangle.png</File>
   </SourceFiles>
   <DestFiles>
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />

@@ -9,7 +9,7 @@ using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Lunar_Lander
 {
-    internal class Lander
+    public class Lander
     {
 
         public Vector2 momentum;
@@ -24,8 +24,8 @@ namespace Lunar_Lander
         private float momentOfInertia;
 
         public float circleRadius;
-        public bool hasLanded;
         public bool isThrusting;
+        public bool isDead = false;
         
         public Lander(Vector2 position, double angle, Vector2 momentum, float circleRadius) 
         {
@@ -36,49 +36,41 @@ namespace Lunar_Lander
             this.momentum = momentum; // Momentum of lander
             mass = 25f;
             fuel = 100f;
-            thrust = 1f; // Acceleration applied to lander
+            thrust = 0.75f; // Acceleration applied to lander
             fuelLossRate = 0.01f;
             momentOfInertia = 0.002f; // 1/rotational_inertia of the lander
-            hasLanded = false;
         }
 
         public void applyThrust(GameTime gameTime, float value)
         {
-            isThrusting = true;
-            if (!hasLanded)
+            float dt = gameTime.ElapsedGameTime.Milliseconds;
+            if (fuel > 0)
             {
-                float dt = gameTime.ElapsedGameTime.Milliseconds;
-                if (fuel > 0)
-                {
-                    momentum += orientation * thrust / mass * dt;
-                    fuel -= dt * fuelLossRate;
-                }
-                else
-                {
-                    fuel = 0f;
-                }
+                isThrusting = true;
+                momentum += orientation * thrust / mass * dt;
+                fuel -= dt * fuelLossRate;
+            }
+            else
+            {
+                fuel = 0f;
             }
         }
 
         public void rotateCounterClockwise(GameTime gameTime, float value)
         {
-            if (!hasLanded)
-            {
-                float dt = gameTime.ElapsedGameTime.Milliseconds;
-                angleRadians -= momentOfInertia * dt;
-                if (angleRadians < 0) angleRadians += 2 * Math.PI;
-                this.updateOrientation();
-            }
+
+            float dt = gameTime.ElapsedGameTime.Milliseconds;
+            angleRadians -= momentOfInertia * dt;
+            if (angleRadians < 0) angleRadians += 2 * Math.PI;
+            this.updateOrientation();
         }
         public void rotateClockwise(GameTime gameTime, float value)
         {
-            if (!hasLanded)
-            {
-                float dt = gameTime.ElapsedGameTime.Milliseconds;
-                angleRadians += momentOfInertia * dt;
-                if (angleRadians >= 2 * Math.PI) angleRadians -= 2 * Math.PI;
-                this.updateOrientation();
-            }
+
+            float dt = gameTime.ElapsedGameTime.Milliseconds;
+            angleRadians += momentOfInertia * dt;
+            if (angleRadians >= 2 * Math.PI) angleRadians -= 2 * Math.PI;
+            this.updateOrientation();
         }
 
 
